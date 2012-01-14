@@ -22,56 +22,59 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
-import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
 import translator.com.util.AsyncProxy;
 import translator.com.util.ClipboardHelper;
+import translator.com.util.FixedJTextField;
 
 import com.melloware.jintellitype.JIntellitype;
 
 public class MainWindow {
-	private String textTrans = "";
 	private String textWord = "";
-
-	final JTextField word = new JTextField(textWord);
+	private String textTranslation = "";
 	private JFrame jfrm;
+	final FixedJTextField word;
 	
-	public JFrame getJfrm() {
+	private JFrame getJfrm() {
 		return jfrm;
 	}
-
-	public void setTextWord(String textWord) {
-		this.textWord = textWord;
-	}
 	
-	public void repaint() {
+	private void repaint() {
 		jfrm.repaint();
 	}
 
-	public void setText(String text) {
-		this.textTrans = text;
-	}
-	public String getText() {
-		return word.getText();
+	public void setTransalationAndRepaint(final String text) {
+		try {
+			SwingUtilities.invokeAndWait(new Runnable() {
+				public void run() {
+					MainWindow.this.textTranslation = text;
+					word.requestFocusInWindow();
+					jfrm.repaint();
+				}
+			});
+		} catch (Exception e) {
+			e.printStackTrace();
+		} 
 	}
 
 	@SuppressWarnings("serial")
-	public MainWindow(ActionListener buttonPressed, Properties props) throws FileNotFoundException, IOException {
-		textTrans = new Formatter().format("Press Ñtrl+%s to translate word from buffer", props.getProperty("hotkey")).toString();
+	private MainWindow(ActionListener buttonPressed, Properties props) throws FileNotFoundException, IOException {
+		textTranslation = new Formatter().format("Press Ñtrl+%s to translate word from buffer", props.getProperty("hotkey")).toString();
 		
-		final JTextArea textArea = new JTextArea(textTrans);
+		final JTextArea textArea = new JTextArea(textTranslation);
 		textArea.setEditable(false);
 		textArea.getWidth();
 		final JScrollPane sp = new JScrollPane(textArea, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		final JButton button = new JButton("Translate");
+		word = new FixedJTextField(textWord);
 		word.setPreferredSize(new Dimension(150, 28));
 		
 		BorderLayout borderLayout = new BorderLayout(5, 5);
 		
 		jfrm = new JFrame("Aggrydict") {
 			public void paint(Graphics g) {
-				String formattedStr = ResizeFormatter.format(textTrans, getWidth() - 29, textArea);
+				String formattedStr = ResizeFormatter.format(textTranslation, getWidth() - 29, textArea);
 				textArea.setText(formattedStr);
 				if (AsyncProxy.isAlive()) {
 					word.setEditable(false);
@@ -152,18 +155,17 @@ public class MainWindow {
 					window.getJfrm().setExtendedState(JFrame.NORMAL);
 					window.repaint();
 				} else {
-					word = window.getText();
+					word = window.word.getText();
 				}
 				if (word != null) {
 					word = word.trim();
-					window.setTextWord(word);
+					window.textWord = word;
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 			if (word == null || word.length() == 0) {
-				window.setText("Buffer is empty");
-				window.repaint();
+				window.setTransalationAndRepaint("Buffer is empty");
 				return;
 			} else {
 				if (!AsyncProxy.isAlive())

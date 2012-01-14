@@ -40,8 +40,7 @@ public class AsyncProxy implements Runnable{
 					isRunning = false;
 				}
 			}
-			window.setText(res);
-			window.repaint();
+			window.setTransalationAndRepaint(res);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

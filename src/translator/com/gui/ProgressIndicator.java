@@ -24,8 +24,7 @@ public class ProgressIndicator implements Runnable {
 		while (true) {
 			synchronized(this) {
 				if (inProgress) {
-					window.setText(status);
-					window.repaint();
+					window.setTransalationAndRepaint(status);
 					status += "|";
 					if (status.length() > 30)
 						status = initialStatus;
